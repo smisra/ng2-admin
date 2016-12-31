@@ -32,7 +32,10 @@
  *
  */
 
-declare var jQuery:any;
+interface JQuery {
+    easyPieChart;
+}
+
 declare var GoogleMapsLoader:any;
 declare var L:any;
 declare var AmCharts:any;
@@ -52,8 +55,8 @@ interface SystemJS {
 }
 
 interface GlobalEnvironment {
-  ENV;
-  HMR;
+  ENV: string;
+  HMR: boolean;
   SystemJS: SystemJS;
   System: SystemJS;
 }

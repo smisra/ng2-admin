@@ -1,12 +1,24 @@
 import {Injectable} from '@angular/core';
 import {Router, Routes} from '@angular/router';
 
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+
 @Injectable()
 export class BaMenuService {
+  menuItems = new BehaviorSubject<any[]>([]);
 
   protected _currentMenuItem = {};
 
-  constructor(private _router:Router) {
+  constructor(private _router:Router) { }
+
+  /**
+   * Updates the routes in the menu
+   *
+   * @param {Routes} routes Type compatible with app.menu.ts
+   */
+  public updateMenuByRoutes(routes: Routes) {
+    let convertedRoutes = this.convertRoutesToMenus(_.cloneDeep(routes));
+    this.menuItems.next(convertedRoutes);
   }
 
   public convertRoutesToMenus(routes:Routes):any[] {
@@ -76,8 +88,12 @@ export class BaMenuService {
     }
 
     // we have to collect all paths to correctly build the url then
-    item.route.paths = parent && parent.route && parent.route.paths ? parent.route.paths.slice(0) : [];
-    item.route.paths.push(item.route.path);
+    if (Array.isArray(item.route.path)) {
+      item.route.paths = item.route.path;
+    } else {
+      item.route.paths = parent && parent.route && parent.route.paths ? parent.route.paths.slice(0) : ['/'];
+      if (!!item.route.path) item.route.paths.push(item.route.path);
+    }
 
     if (object.children && object.children.length > 0) {
       item.children = this._convertArrayToItems(object.children, item);
@@ -95,11 +111,8 @@ export class BaMenuService {
 
   protected _prepareItem(object:any):any {
     if (!object.skip) {
-
-      let itemUrl = this._router.serializeUrl(this._router.createUrlTree(object.route.paths));
-      object.url = object.url ? object.url : '#' + itemUrl;
-
       object.target = object.target || '';
+      object.pathMatch = object.pathMatch  || 'full';
       return this._selectItem(object);
     }
 
@@ -107,7 +120,7 @@ export class BaMenuService {
   }
 
   protected _selectItem(object:any):any {
-    object.selected = object.url == ('#' + this._router.url);
+    object.selected = this._router.isActive(this._router.createUrlTree(object.route.paths), object.pathMatch === 'full');
     return object;
   }
 }
